@@ -46,6 +46,7 @@ ls
 ```
 
 Here, you should see your Verilog files like `good_mux.v` and `tb_good_mux.v`.  
+you can see good-mux file here
 <img width="1920" height="923" alt="week-1 image" src="https://github.com/user-attachments/assets/1b684301-8b8b-4091-ab65-dc69ce851110" />
 
 
@@ -70,6 +71,7 @@ iverilog good_mux.v tb_good_mux.v
 ```bash
 gtkwave tb_good_mux.vcd
 ```
+this window pops up after this code
 <img width="1920" height="923" alt="gtkwave good_mux" src="https://github.com/user-attachments/assets/d8978dc3-897d-4871-a98d-146b8d90a3a9" />
 
 
@@ -83,6 +85,9 @@ You can also open and inspect the files in a text editor:
 ```bash
 gvim tb_good_mux.v -o good_mux.v
 ```
+then you should see these codes in gvim
+<img width="1920" height="923" alt="gvim goodmux" src="https://github.com/user-attachments/assets/682e029c-e1a0-494a-9118-561fb74bfada" />
+<img width="1920" height="923" alt="gvim goodmuxtb" src="https://github.com/user-attachments/assets/a6ffcb96-59c5-4244-90f4-dec62829ef6b" />
 
 ### **Understanding the Multiplexer**
 
@@ -132,6 +137,7 @@ abc -liberty ../lib/sky130_fd_sc_hd__tt_025C_1v80.lib
 ```bash
 show
 ```
+this is the visuavalisation
 <img width="1920" height="923" alt="yosys" src="https://github.com/user-attachments/assets/92f28342-25b9-4fdb-933a-fe9d0ce552d0" />
 
 
