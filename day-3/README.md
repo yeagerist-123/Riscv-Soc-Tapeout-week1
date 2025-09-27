@@ -19,8 +19,7 @@ Welcome to Day 3! This guide covers key optimization techniques for combinationa
   - [Lab 6](#lab-6--d-flip-flop-always-high)
   - [Lab 7]
   - [Lab 8]
-  - [Lab 9]
-   - [Lab 10](#sequential optimisations unused outputs)
+  - [Lab 9
 - [Summary](#summary)
 
 ---
@@ -149,49 +148,81 @@ begin
 end
 endmodule
 ```
-- Output `q` is always 1, regardless of clock or reset
 - <img width="1920" height="922" alt="dffcont2" src="https://github.com/user-attachments/assets/19701764-2c7b-4b8c-973f-5d5603fd18a5" />
 
 
 ---
 ### Lab 7 – D Flip-Flop const-3
 
-```verilog
-module dff_const2(input clk, input reset, output reg q);
+```
+module dff_const3(input clk, input reset, output reg q);
+reg q1;
+
 always @(posedge clk, posedge reset)
 begin
-	q <= 1'b1;
+	if(reset)
+	begin
+		q <= 1'b1;
+		q1 <= 1'b0;
+	end
+	else
+	begin
+		q1 <= 1'b1;
+		q <= q1;
+	end
 end
+
 endmodule
 ```
-- Output `q` is always 1, regardless of clock or reset
 - <img width="1920" height="922" alt="dffconst3" src="https://github.com/user-attachments/assets/d9e952cb-d920-45ff-9409-b1e82514b6e2" />
 
-### Lab 8 – D Flip-Flop const-8
+### Lab 8 module dff_const4
+```
+module dff_const4(input clk, input reset, output reg q);
+reg q1;
 
-```verilog
-module dff_const2(input clk, input reset, output reg q);
 always @(posedge clk, posedge reset)
 begin
-	q <= 1'b1;
+	if(reset)
+	begin
+		q <= 1'b1;
+		q1 <= 1'b1;
+	end
+	else
+	begin
+		q1 <= 1'b1;
+		q <= q1;
+	end
 end
+
 endmodule
 ```
-- Output `q` is always 1, regardless of clock or reset
 - 
 <img width="1920" height="922" alt="dffconst4" src="https://github.com/user-attachments/assets/cf503bed-a254-41f5-a1d4-8eb1e74897a2" />
 
 ### Lab 9 – D Flip-Flop const-5
 
 ```verilog
-module dff_const2(input clk, input reset, output reg q);
+
+module dff_const5(input clk, input reset, output reg q);
+reg q1;
 always @(posedge clk, posedge reset)
 begin
-	q <= 1'b1;
+	if(reset)
+	begin
+		q <= 1'b0;
+		q1 <= 1'b0;
+	end
+	else
+	begin
+		q1 <= 1'b1;
+		q <= q1;
+	end
 end
+
 endmodule
 ```
-- Output `q` is always 1, regardless of clock or reset
+
 - <img width="1920" height="922" alt="dffcont5" src="https://github.com/user-attachments/assets/de924c5d-51f2-4652-96ba-8d5415609e7f" />
 
 
