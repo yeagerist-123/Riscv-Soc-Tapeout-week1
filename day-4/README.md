@@ -70,29 +70,51 @@ Following these guidelines prevents mismatches and ensures accurate design simul
 
 ## 5. Labs on GLS and Synthesis-Simulation Mismatch
 
-### Lab 37: GLS Mismatch Demonstration (Part 1)
+### Lab 1: GLS Mismatch Demonstration (Part 1)
 
-Demonstrates how certain RTL constructs can produce different results in GLS compared to RTL simulation.
+Here we check the wave form in GTKWAVE of only rtl and then gls waveform and verify whether we get the same.
+the verilog file we use is `ternary_operator_mux.v`
+follow previous steps to get the below gtkwave
 
-### Lab 38: GLS Mismatch Demonstration (Part 2)
 
-Further explores mismatches, emphasizing the importance of gate-level verification.
+next observe netlist by invoking yosys, you get the below netlist
 
-*(Screenshots and outputs to be added in your local repo as needed)*
+now use
+`1.iverilog ../my_lib/verilog_model/primitives.v ../my_lib/verilog_model/sky130_fd_sc_hd.v ternary_operator_mux_net.v tb_ternary_operator_mux.v
+ 2. ./a.out
+ 3. gtkwave tb_ternary_operator_mux.vcd
+ `
+ you should see
+
+ here wire _0_,_1_ imply that this is GLS. You can see that both are same
+ 
+### Lab 2: GLS Mismatch Demonstration (Part 2)
+
+Here we use verilog file bad_mux.v(do the same steps as mentioned above to compare both rtl and gls waveforms)
+gtkwave for rtl
+
+yosys netlist
+
+gtkwave for gls
+
+clearly you can observe the difference that in gls output changes according to i0 when sel is low and according to i1 when sel is high.
 
 ---
 
 ## 6. Labs on Synth-Sim Mismatch for Blocking Statements
 
-### Lab 39: Synth-Sim Mismatch Caused by Blocking Assignments (Part 1)
+### Lab 3: Synth-Sim Mismatch Caused by Blocking Assignments 
 
 Shows how blocking assignments in sequential logic can create mismatches between simulation and synthesis.
+we use blocking_caveat.v file here which performs [(a|b)&c]
+gtkwave of rtl synthesis shows clear mismatch as due to blocking statements it considers previous values.
 
-### Lab 40: Synth-Sim Mismatch Caused by Blocking Assignments (Part 2)
+yosys netlist:
 
-Demonstrates how replacing blocking assignments with non-blocking assignments resolves the issue.
+gtkwave of gls synthesis:
 
-*(Screenshots and outputs to be added in your local repo as needed)*
+here you can see that the mismatch problem has been solved as it looks only at instantaneous value
+
 
 ---
 
