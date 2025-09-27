@@ -75,9 +75,13 @@ Following these guidelines prevents mismatches and ensures accurate design simul
 Here we check the wave form in GTKWAVE of only rtl and then gls waveform and verify whether we get the same.
 the verilog file we use is `ternary_operator_mux.v`
 follow previous steps to get the below gtkwave
+<img width="1920" height="922" alt="w-4 ternay wave" src="https://github.com/user-attachments/assets/2fb7ed85-f6db-49fc-a069-36c10432e8ef" />
+
 
 
 next observe netlist by invoking yosys, you get the below netlist
+<img width="1920" height="922" alt="w-4 termux yosys" src="https://github.com/user-attachments/assets/2f6976d2-bfcc-49a1-afb5-86796693cee5" />
+
 
 now use
 `1.iverilog ../my_lib/verilog_model/primitives.v ../my_lib/verilog_model/sky130_fd_sc_hd.v ternary_operator_mux_net.v tb_ternary_operator_mux.v
@@ -85,6 +89,8 @@ now use
  3. gtkwave tb_ternary_operator_mux.vcd
  `
  you should see
+ <img width="1920" height="922" alt="gls" src="https://github.com/user-attachments/assets/eff922ea-9b5b-42c2-92ad-3f4e7a11c2fc" />
+
 
  here wire _0_,_1_ imply that this is GLS. You can see that both are same
  
@@ -92,10 +98,16 @@ now use
 
 Here we use verilog file bad_mux.v(do the same steps as mentioned above to compare both rtl and gls waveforms)
 gtkwave for rtl
+<img width="1920" height="922" alt="bad-mux rtl" src="https://github.com/user-attachments/assets/33679a48-e075-4536-be86-b6d4689599c9" />
+
 
 yosys netlist
+<img width="1920" height="922" alt="badmux yosys" src="https://github.com/user-attachments/assets/1945bfcb-6cca-4f22-989c-df921db2e9bf" />
+
 
 gtkwave for gls
+<img width="1920" height="922" alt="badmux gls" src="https://github.com/user-attachments/assets/bf4cb024-3e61-4189-8459-14c8d7321556" />
+
 
 clearly you can observe the difference that in gls output changes according to i0 when sel is low and according to i1 when sel is high.
 
@@ -108,10 +120,16 @@ clearly you can observe the difference that in gls output changes according to i
 Shows how blocking assignments in sequential logic can create mismatches between simulation and synthesis.
 we use blocking_caveat.v file here which performs [(a|b)&c]
 gtkwave of rtl synthesis shows clear mismatch as due to blocking statements it considers previous values.
+<img width="1920" height="922" alt="blockcav rtl" src="https://github.com/user-attachments/assets/08bbf56b-93c4-4ae0-aae7-f0e8d556fc3d" />
+
 
 yosys netlist:
+<img width="1920" height="922" alt="blockcav yosys" src="https://github.com/user-attachments/assets/aa7d8c1e-55b0-418b-9953-4996e67bb056" />
+
 
 gtkwave of gls synthesis:
+<img width="1920" height="922" alt="blockcav gls" src="https://github.com/user-attachments/assets/dbfa34e0-0428-4df0-86c6-3618908ddd34" />
+
 
 here you can see that the mismatch problem has been solved as it looks only at instantaneous value
 
