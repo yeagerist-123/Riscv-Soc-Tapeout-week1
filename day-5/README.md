@@ -1,149 +1,407 @@
-# Day 5 – RISC-V Taproot Program
+# Day 5: Optimization in Synthesis
 
-This day covers essential Verilog constructs—`if`, `case`, and loops—with a focus on how they map to hardware and best practices for RTL design.
+Welcome to Day 5 of the RTL workshop! Today, we will cover optimization in Verilog synthesis, focusing on `if-else` statements, `for` loops, generate blocks, and explore how improper coding can lead to inferred latches. Labs are included for hands-on experience.
 
 ---
+## Contents
 
-## Table of Contents
-
-- [1. If-Case Constructs – Part 1](#1-if-case-constructs--part-1)
-- [2. If-Case Constructs – Part 2](#2-if-case-constructs--part-2)
-- [3. If-Case Constructs – Part 3](#3-if-case-constructs--part-3)
-- [4. Loop Constructs – Part 1](#4-loop-constructs--part-1)
-- [5. Loop Constructs – Part 2](#5-loop-constructs--part-2)
-- [6. Lab Session](#6-lab-session)
+- [1. If-Else Statements in Verilog](#1-if-else-statements-in-verilog)
+- [2. Inferred Latches in Verilog](#2-inferred-latches-in-verilog)
+- [3. Labs for If-Else and Case Statements](#3-labs-for-if-else-and-case-statements)
+  - [Lab 1: Incomplete If Statement](#lab-1-incomplete-if-statement)
+  - [Lab 2: Synthesis Result of Lab 1](#lab-2-synthesis-result-of-lab-1)
+  - [Lab 3: Nested If-Else](#lab-3-nested-if-else)
+  - [Lab 4: Synthesis Result of Lab 3](#lab-4-synthesis-result-of-lab-3)
+  - [Lab 5: Complete Case Statement](#lab-5-complete-case-statement)
+  - [Lab 6: Synthesis Result of Lab 5](#lab-6-synthesis-result-of-lab-5)
+  - [Lab 7: Incomplete Case Handling](#lab-7-incomplete-case-handling)
+  - [Lab 8: Partial Assignments in Case](#lab-8-partial-assignments-in-case)
+- [4. For Loops in Verilog](#4-for-loops-in-verilog)
+- [5. Generate Blocks in Verilog](#5-generate-blocks-in-verilog)
+- [6. What is an RCA (Ripple Carry Adder)?](#6-what-is-an-rca-ripple-carry-adder)
+- [7. Labs on Loops and Generate Blocks](#7-labs-on-loops-and-generate-blocks)
+  - [Lab 9: 4-to-1 MUX Using For Loop](#lab-9-4-to-1-mux-using-for-loop)
+  - [Lab 10: 8-to-1 Demux Using Case](#lab-10-8-to-1-demux-using-case)
+  - [Lab 11: 8-to-1 Demux Using For Loop](#lab-11-8-to-1-demux-using-for-loop)
+  - [Lab 12: 8-bit Ripple Carry Adder with Generate Block](#lab-12-8-bit-ripple-carry-adder-with-generate-block)
 - [Summary](#summary)
 
 ---
 
-## 1. If-Case Constructs – Part 1
+## 1. If-Else Statements in Verilog
 
-### Overview
+**If-else statements** are used for conditional execution in behavioral modeling, typically within procedural blocks (`always`, `initial`, tasks, or functions).
 
-The `if` construct enables conditional execution in Verilog. In hardware, it creates **priority logic**: conditions are checked one after another, and the first `true` condition sets the output.
+### Syntax
 
-- **Implementation:** An `if` ladder maps to a chain of multiplexers.
-- **Priority:** The first satisfied condition wins.
-- **Risks:** Long `if` chains → deep, slow logic; multiple true conditions → only the first is executed.
-
-**Why is it fine in counters?**
-- Counter conditions (e.g., `reset`, `enable`) are usually mutually exclusive.
-- Example:
-  ```verilog
-  always @(posedge clk) begin
-      if (reset)
-          count <= 0;
-      else if (enable)
-          count <= count + 1;
-  end
-  ```
-  Here, priority is intentional (`reset` > `enable`).
-
----
-
-## 2. If-Case Constructs – Part 2
-
-### Case Statement
-
-The `case` statement implements parallel selection—**multiplexer logic**.
-
-- **Implementation:** All branches are evaluated in parallel.
-- **Best for:** Mutually exclusive selection (e.g., bus/mux).
-
-**Example:**
 ```verilog
-always @(*) begin
-    case (sel)
-        2'b00: y = a;
-        2'b01: y = b;
-        2'b10: y = c;
-        default: y = d;
-    endcase
+if (condition) begin
+    // Code block executed if condition is true
+end else begin
+    // Code block executed if condition is false
 end
 ```
 
-**Caveats:**
-- Missing `default` → possible latch inference.
-- Overlapping cases → ambiguous hardware.
-- Tool directives (`full_case`, `parallel_case`) must be used carefully.
+- **condition**: An expression evaluating to true (non-zero) or false (zero).
+- **begin ... end**: Used to group multiple statements. Omit if only one statement is present.
+- The `else` part is optional.
+
+#### Nested If-Else
+
+```verilog
+if (condition1) begin
+    // Code for condition1 true
+end else if (condition2) begin
+    // Code for condition2 true
+end else begin
+    // Code if no conditions are true
+end
+```
 
 ---
 
-## 3. If-Case Constructs – Part 3
+## 2. Inferred Latches in Verilog
 
-### Differences Between `if-elseif-else` and `case`
+**Inferred latches** occur when a combinational logic block does not assign a value to a variable in all possible execution paths. This causes the synthesis tool to infer a latch, which may not be the designer’s intention.
 
-| Feature              | if-elseif-else                  | case                          |
-|----------------------|----------------------------------|-------------------------------|
-| Hardware mapping     | Priority logic chain (mux)       | Parallel multiplexer selection|
-| Execution order      | Sequential, first true wins      | All conditions evaluated in parallel|
-| Use case             | Priority important (e.g., reset) | Mutually exclusive conditions |
-| Dangers              | Multiple true conditions, debugging priority | Latch if no default, overlap issues |
+### Example of Latch Inference
+
+```verilog
+module ex (
+    input wire a, b, sel,
+    output reg y
+);
+    always @(a, b, sel) begin
+        if (sel == 1'b1)
+            y = a; // No 'else' - y is not assigned when sel == 0
+    end
+endmodule
+```
+
+**Problem**: When `sel` is 0, `y` is not assigned, so a latch is inferred.
+
+#### Solution: Add Else or Default Case
+
+```verilog
+module ex (
+    input wire a, b, sel,
+    output reg y
+);
+    always @(a, b, sel) begin
+        case(sel)
+            1'b1 : y = a;
+            default : y = 1'b0; // Default assignment
+        endcase
+    end
+endmodule
+```
 
 ---
 
-## 4. Loop Constructs – Part 1
+## 3. Labs for If-Else and Case Statements
 
-### Synthesis Loops
+### Lab 1: Incomplete If Statement
 
-Loops in HDL **generate hardware** during synthesis—they are not runtime constructs.
+```verilog
+module incomp_if (input i0, input i1, input i2, output reg y);
+always @(*) begin
+    if (i0)
+        y <= i1;
+end
+endmodule
+```
+<img width="1920" height="922" alt="w-5 inc if" src="https://github.com/user-attachments/assets/75bb3686-f72a-4e5e-941b-03ef76c7ec8c" />
 
-- **for loop:** Expands logic statically.
-- **while loop:** Rare; may cause issues in synthesis.
-- **repeat loop:** Simulation-only.
 
-**Example:**
+---
+
+### Lab 2: Synthesis Result of Lab 1
+
+<img width="1920" height="922" alt="w-5 incom yosys" src="https://github.com/user-attachments/assets/3854834a-d512-4b28-b2ac-558446f62cf3" />
+
+
+---
+
+### Lab 3: Nested If-Else
+
+```verilog
+module incomp_if2 (input i0, input i1, input i2, input i3, output reg y);
+always @(*) begin
+    if (i0)
+        y <= i1;
+    else if (i2)
+        y <= i3;
+end
+endmodule
+```
+<img width="1920" height="922" alt="incompif2 wave" src="https://github.com/user-attachments/assets/4442e40b-89d7-4b4b-98a1-aefb8aa2043f" />
+
+
+---
+
+### Lab 4: Synthesis Result of Lab 3
+<img width="1920" height="922" alt="incom2 yosys" src="https://github.com/user-attachments/assets/c3dde5e2-7e58-4d21-927d-3ca11879773f" />
+
+
+
+---
+
+### Lab 5: Complete Case Statement
+
+```verilog
+module comp_case (input i0, input i1, input i2, input [1:0] sel, output reg y);
+always @(*) begin
+    case(sel)
+        2'b00 : y = i0;
+        2'b01 : y = i1;
+        default : y = i2;
+    endcase
+end
+endmodule
+```
+
+<img width="1920" height="922" alt="compcase" src="https://github.com/user-attachments/assets/8b37f21c-5455-4403-96c6-5ccf9c365b08" />
+
+---
+
+### Lab 6: Synthesis Result of Lab 5
+<img width="1920" height="922" alt="comp_case yosys" src="https://github.com/user-attachments/assets/ba7bfc79-e161-4ddf-8b06-7f4ac4fd40ab" />
+
+
+---
+
+### Lab 7: Incomplete Case Handling
+
+```verilog
+module bad_case (
+    input i0, input i1, input i2, input i3,
+    input [1:0] sel,
+    output reg y
+);
+always @(*) begin
+    case(sel)
+        2'b00: y = i0;
+        2'b01: y = i1;
+        2'b10: y = i2;
+        2'b1?: y = i3; // '?' is a wildcard; be careful with incomplete cases!
+    endcase
+end
+endmodule
+```
+
+<img width="1920" height="922" alt="badcasewave" src="https://github.com/user-attachments/assets/7b6942d4-d5d0-4e75-b241-4be336ea5848" />
+
+---
+
+### Lab 8: Partial Assignments in Case
+
+```verilog
+module partial_case_assign (
+    input i0, input i1, input i2,
+    input [1:0] sel,
+    output reg y, output reg x
+);
+always @(*) begin
+    case(sel)
+        2'b00: begin
+            y = i0;
+            x = i2;
+        end
+        2'b01: y = i1;
+        default: begin
+            x = i1;
+            y = i2;
+        end
+    endcase
+end
+endmodule
+```
+---
+
+## 4. For Loops in Verilog
+
+A **for loop** is used within procedural blocks (`initial`, `always`, tasks/functions) to execute statements multiple times based on a loop counter.
+
+### Syntax
+
+```verilog
+for (initialization; condition; increment) begin
+    // Statements to execute
+end
+```
+
+- Must be inside procedural blocks.
+- Synthesizable only if the number of iterations is fixed at compile time.
+
+#### Example: 4-to-1 MUX Using a For Loop
+
+```verilog
+module mux_4to1_for_loop (
+    input wire [3:0] data, // 4 input lines
+    input wire [1:0] sel,  // 2-bit select
+    output reg y           // Output
+);
+    integer i;
+    always @(data, sel) begin
+        y = 1'b0; // Default output
+        for (i = 0; i < 4; i = i + 1) begin
+            if (i == sel)
+                y = data[i];
+        end
+    end
+endmodule
+```
+
+---
+
+## 5. Generate Blocks in Verilog
+
+A **generate block** is used to create hardware structures such as module instances or logic at compile time. Typically used with `for` loops and the `genvar` keyword.
+
+#### Example
+
 ```verilog
 genvar i;
 generate
-    for (i = 0; i < 8; i = i + 1) begin
-        dff d1(.clk(clk), .d(data[i]), .q(q[i]));
+    for (i = 0; i < 4; i = i + 1) begin : gen_loop
+        and_gate and_inst (.a(in[i]), .b(in[i+1]), .y(out[i]));
     end
 endgenerate
 ```
-*Implements 8 flip-flops with one statement.*
 
 ---
 
-## 5. Loop Constructs – Part 2
+## 6. What is an RCA (Ripple Carry Adder)?
 
-### Simulation Loops
+An RCA adds binary numbers using a chain of full adders. To add `n` bits, you need `n` full adders. Each carry-out connects to the carry-in of the next stage.
 
-Simulation loops are useful in testbenches.
+![image](https://github.com/user-attachments/assets/f1ec27d4-b770-4d7a-a418-6435fc81f538)
 
-**Example:**
+---
+
+## 7. Labs on Loops and Generate Blocks
+
+### Lab 9: 4-to-1 MUX Using For Loop
+
 ```verilog
-integer i;
-initial begin
-    for (i = 0; i < 10; i = i + 1) begin
-        data = i;
-        #10;
+module mux_generate (
+    input i0, input i1, input i2, input i3,
+    input [1:0] sel,
+    output reg y
+);
+wire [3:0] i_int;
+assign i_int = {i3, i2, i1, i0};
+integer k;
+always @(*) begin
+    for (k = 0; k < 4; k = k + 1) begin
+        if (k == sel)
+            y = i_int[k];
     end
 end
+endmodule
 ```
-*Applies 10 stimulus values, each with 10 time units delay.*
+<img width="1920" height="922" alt="muxgene" src="https://github.com/user-attachments/assets/b9b52e2a-1952-4c8b-b1c1-ee2eefbb4e88" />
 
-**Key Points:**
-- In **synthesis**: loops unroll into hardware.
-- In **simulation**: loops behave as software.
 
 ---
 
-## 6. Lab Session
+### Lab 10: 8-to-1 Demux Using Case
 
-- Practical coding for `if`, `case`, and loops.
-- Example: Incomplete if-case (see `incomp_if.v`).
-- Implemented small modules and testbenches.
-- Verified:
-  - `if` generates priority logic.
-  - `case` generates parallel muxes.
-  - Loops replicate hardware.
+```verilog
+module demux_case (
+    output o0, output o1, output o2, output o3,
+    output o4, output o5, output o6, output o7,
+    input [2:0] sel,
+    input i
+);
+reg [7:0] y_int;
+assign {o7, o6, o5, o4, o3, o2, o1, o0} = y_int;
+always @(*) begin
+    y_int = 8'b0;
+    case(sel)
+        3'b000 : y_int[0] = i;
+        3'b001 : y_int[1] = i;
+        3'b010 : y_int[2] = i;
+        3'b011 : y_int[3] = i;
+        3'b100 : y_int[4] = i;
+        3'b101 : y_int[5] = i;
+        3'b110 : y_int[6] = i;
+        3'b111 : y_int[7] = i;
+    endcase
+end
+endmodule
+```
+<img width="1920" height="922" alt="demuxcase" src="https://github.com/user-attachments/assets/fe42d6fd-7866-4e02-892c-e09592e4b231" />
+
+
+---
+
+### Lab 11: 8-to-1 Demux Using For Loop
+
+```verilog
+module demux_generate (
+    output o0, output o1, output o2, output o3,
+    output o4, output o5, output o6, output o7,
+    input [2:0] sel,
+    input i
+);
+reg [7:0] y_int;
+assign {o7, o6, o5, o4, o3, o2, o1, o0} = y_int;
+integer k;
+always @(*) begin
+    y_int = 8'b0;
+    for (k = 0; k < 8; k = k + 1) begin
+        if (k == sel)
+            y_int[k] = i;
+    end
+end
+endmodule
+```
+<img width="1920" height="922" alt="demuxgen" src="https://github.com/user-attachments/assets/6382b2f8-a4d4-4711-8f37-b86b54911037" />
+
+
+---
+
+### Lab 12: 8-bit Ripple Carry Adder with Generate Block
+
+```verilog
+module rca (
+    input [7:0] num1,
+    input [7:0] num2,
+    output [8:0] sum
+);
+wire [7:0] int_sum;
+wire [7:0] int_co;
+
+genvar i;
+generate
+    for (i = 1; i < 8; i = i + 1) begin
+        fa u_fa_1 (.a(num1[i]), .b(num2[i]), .c(int_co[i-1]), .co(int_co[i]), .sum(int_sum[i]));
+    end
+endgenerate
+
+fa u_fa_0 (.a(num1[0]), .b(num2[0]), .c(1'b0), .co(int_co[0]), .sum(int_sum[0]));
+
+assign sum[7:0] = int_sum;
+assign sum[8] = int_co[7];
+endmodule
+```
+**Full Adder Module:**
+```verilog
+module fa (input a, input b, input c, output co, output sum);
+    assign {co, sum} = a + b + c;
+endmodule
+```
+
+---
 
 ---
 
 ## Summary
 
-- Use `if` for priority logic (e.g., counter `reset` and `enable`).
-- Use `case` for parallel, mutually exclusive choices.
-- Loops replicate hardware in synthesis, provide stimulus in simulation.
-- Watch out for latches (missing defaults), priority bugs, and ambiguous cases.
+- Use complete if-else and case statements to avoid unintended latch inference.
+- For loops and generate blocks are powerful for writing scalable, synthesizable code.
+- Always ensure every signal is assigned in every possible execution path for combinational logic.
+- Use labs to reinforce concepts with practical Verilog code and synthesis results.
+
+---
